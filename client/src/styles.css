@@ -1,0 +1,289 @@
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --text: #1c1f24;
+  --muted: #6b7280;
+  --border: #e3e6eb;
+  --accent: #4f46e5;
+  --accent-text: #ffffff;
+  --ok: #047857;
+  --error: #b91c1c;
+  --badge: #eef2ff;
+  --badge-text: #3730a3;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1115;
+    --panel: #181b22;
+    --text: #e6e8ec;
+    --muted: #9ca3af;
+    --border: #2a2f3a;
+    --badge: #232845;
+    --badge-text: #c7d2fe;
+    --ok: #34d399;
+    --error: #f87171;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1115;
+  --panel: #181b22;
+  --text: #e6e8ec;
+  --muted: #9ca3af;
+  --border: #2a2f3a;
+  --badge: #232845;
+  --badge-text: #c7d2fe;
+  --ok: #34d399;
+  --error: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 1.75rem;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+h3 {
+  margin: 16px 0 6px;
+  font-size: 0.95rem;
+}
+
+.layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 800px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+  margin-top: 10px;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.segment {
+  padding: 6px 14px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.segment input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segment.selected {
+  background: var(--badge);
+  color: var(--badge-text);
+  font-weight: 600;
+}
+
+.form-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.ask-form {
+  display: flex;
+  gap: 8px;
+}
+
+.ask-form input {
+  flex: 1;
+}
+
+.item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-header,
+.source-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-title {
+  overflow-wrap: anywhere;
+}
+
+.item-url {
+  color: var(--accent);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  background: var(--badge);
+  color: var(--badge-text);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  color: var(--muted);
+}
+
+.status-ready {
+  color: var(--ok);
+}
+
+.status-failed {
+  color: var(--error);
+}
+
+.status-ok {
+  color: var(--ok);
+  font-size: 0.9rem;
+}
+
+.status-error {
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 0.8rem;
+}
+
+.answer {
+  margin-top: 16px;
+}
+
+.answer-text {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.source-list {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.source {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.source.cited {
+  border-color: var(--accent);
+}
+
+.snippet {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
