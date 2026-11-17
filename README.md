@@ -5,6 +5,10 @@ A small web app for saving notes and web links, then asking questions across the
 - **Backend:** Node.js 20+, Express 5, TypeScript, SQLite (`better-sqlite3`), OpenAI API
 - **Frontend:** React 19, Vite, TypeScript (plain CSS, no UI library)
 
+![How the repo works: frontend, API, background ingestion, SQLite, and question answering](docs/repo-overview.png)
+
+The diagram's source is [docs/repo-overview.svg](docs/repo-overview.svg).
+
 ## Quick start
 
 You need Node.js 20 or newer and an OpenAI API key.
