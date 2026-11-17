@@ -30,6 +30,3 @@ export const queryBodySchema = z.object({
     .min(1, 'Question cannot be empty')
     .max(MAX_QUESTION_CHARS, `Question must be at most ${MAX_QUESTION_CHARS} characters`),
 });
-
-export type IngestBody = z.infer<typeof ingestBodySchema>;
-export type QueryBody = z.infer<typeof queryBodySchema>;

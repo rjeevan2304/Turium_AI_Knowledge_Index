@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { AiProvider } from '../ai/aiProvider.js';
 import type { Logger } from '../logger.js';
 import type { ChunkRepository } from '../store/chunkRepository.js';
-import type { ItemRepository, ItemRecord } from '../store/itemRepository.js';
+import type { ItemRepository, ItemRecord, NewItem } from '../store/itemRepository.js';
 import { chunkText } from './chunker.js';
 import type { UrlFetcher } from './urlFetcher.js';
 
@@ -29,34 +29,32 @@ export class IngestService {
 
   constructor(private readonly deps: IngestServiceDeps) {}
 
-  createNote(text: string): ItemRecord {
-    const item: ItemRecord = {
+  createNote(text: string): NewItem {
+    const item: NewItem = {
       id: randomUUID(),
       type: 'note',
       title: deriveNoteTitle(text),
       sourceUrl: null,
       rawContent: text,
       status: 'pending',
-      error: null,
       createdAt: new Date().toISOString(),
     };
-    this.deps.items.insert({ ...item, rawContent: text });
+    this.deps.items.insert(item);
     this.enqueue(item.id);
     return item;
   }
 
-  createUrl(url: string): ItemRecord {
-    const item: ItemRecord = {
+  createUrl(url: string): NewItem {
+    const item: NewItem = {
       id: randomUUID(),
       type: 'url',
       title: new URL(url).hostname,
       sourceUrl: url,
-      rawContent: null,
+      rawContent: '',
       status: 'pending',
-      error: null,
       createdAt: new Date().toISOString(),
     };
-    this.deps.items.insert({ ...item, rawContent: '' });
+    this.deps.items.insert(item);
     this.enqueue(item.id);
     return item;
   }
