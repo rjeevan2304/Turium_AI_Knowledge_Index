@@ -9,7 +9,7 @@ const envSchema = z.object({
   DB_PATH: z.string().default('./data/inbox.db'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   RETRIEVAL_TOP_K: z.coerce.number().int().positive().default(5),
-  MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.25),
+  MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.15),
   CHUNK_MAX_CHARS: z.coerce.number().int().positive().default(1500),
   CHUNK_OVERLAP_CHARS: z.coerce.number().int().nonnegative().default(200),
 });

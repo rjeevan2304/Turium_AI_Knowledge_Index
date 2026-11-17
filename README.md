@@ -35,7 +35,7 @@ All settings live in `server/.env`. See `server/.env.example` for the full list.
 | `OPENAI_CHAT_MODEL` | `gpt-4o-mini` | Model that writes the answer |
 | `DB_PATH` | `./data/inbox.db` | SQLite file (created on first run) |
 | `RETRIEVAL_TOP_K` | `5` | Chunks passed to the model per question |
-| `MIN_SIMILARITY` | `0.25` | Chunks scoring below this are ignored |
+| `MIN_SIMILARITY` | `0.15` | Chunks scoring below this are ignored. Embedding scores for relevant text are often 0.2 to 0.5, so keep this low |
 | `CHUNK_MAX_CHARS` | `1500` | Maximum chunk size |
 | `CHUNK_OVERLAP_CHARS` | `200` | Overlap carried into the next chunk |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
@@ -103,7 +103,7 @@ curl -X POST localhost:3001/query -H 'content-type: application/json' \
 
 1. **Ingest.** A note's text is stored as-is. For a URL, the server fetches the page, extracts the main article text with Mozilla Readability, and stores that text.
 2. **Chunk.** Text is split on paragraph boundaries and packed into chunks of up to `CHUNK_MAX_CHARS`. Each new chunk starts with the last `CHUNK_OVERLAP_CHARS` of the previous one, so a sentence that spans a boundary is still retrievable.
-3. **Embed.** Chunks are embedded in batches of 100 with `text-embedding-3-small`. Vectors are stored as `Float32` blobs in SQLite.
+3. **Embed.** Chunks are embedded in batches of 100 with `text-embedding-3-small`. Each chunk is embedded with a short header (its item title, plus any links and their site names), so a question like "my GitHub link" can match a bare URL. The stored text is unchanged. Vectors are stored as `Float32` blobs in SQLite.
 4. **Retrieve.** A question is embedded the same way. Every chunk from a ready item is scored by cosine similarity, filtered by `MIN_SIMILARITY`, and the top `RETRIEVAL_TOP_K` are kept.
 5. **Answer.** The chunks are passed to the chat model as numbered sources, with instructions to answer only from them and cite them as `[n]`. The response maps the cited numbers back to the sources and marks which ones were used.
 
@@ -111,6 +111,13 @@ curl -X POST localhost:3001/query -H 'content-type: application/json' \
 
 ### Chunking
 Paragraphs are the natural unit of meaning in notes and articles, so chunks respect paragraph boundaries and only split inside a paragraph when it is too long. The default size of about 1,500 characters (roughly 350 tokens) is a balance: smaller chunks match more precisely but lose surrounding context, and larger chunks dilute the embedding with unrelated text. The 200-character overlap protects answers that span a boundary. The cost is some duplicated text in the index, which is small for this data.
+
+### Search context and the similarity cutoff
+Embedding a bare URL gives a weak signal: a question such as "my GitHub link" shares almost no words with `https://github.com/...`, and the first version of this app missed it. Each chunk is therefore embedded with a short header: the item title, any links it contains, and their site names (for example `Sites: github.com`). Only the embedding input changes. The stored text, the cards, and the text the model reads are the same as before. This is a deliberate, small heuristic rather than a general search layer. A keyword-search or hybrid index would handle more phrasings, but it would go beyond the brief.
+
+The cutoff (`MIN_SIMILARITY`) defaults to 0.15. With `text-embedding-3-small`, relevant matches in this app scored about 0.19 to 0.46, and unrelated text scored around 0.09. A cutoff of 0.25 hid real matches, so 0.15 is the default. The model still decides whether a weak match actually answers the question, and it is told to cite only sources that support its answer.
+
+Notes saved before a change to the embedding header keep their old vectors. Re-add them, or re-ingest, to pick up the change.
 
 ### Vector store: SQLite with an exhaustive scan
 Embeddings are stored in the same SQLite file as the items, and every query scores all chunks in memory. This is the simplest thing that works. It needs no extra service, the data stays transactionally consistent with the items table, and for a personal inbox with thousands of chunks the scan takes milliseconds. The tradeoff is that the scan cost grows linearly, and each query loads every embedding into memory. See "What breaks at scale" below.

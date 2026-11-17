@@ -4,6 +4,7 @@ import type { Logger } from '../logger.js';
 import type { ChunkRepository } from '../store/chunkRepository.js';
 import type { ItemRepository, ItemRecord, NewItem } from '../store/itemRepository.js';
 import { chunkText } from './chunker.js';
+import { buildEmbeddingText } from './embeddingText.js';
 import type { UrlFetcher } from './urlFetcher.js';
 
 export interface IngestServiceDeps {
@@ -95,7 +96,10 @@ export class IngestService {
       const pieces = chunkText(text, this.deps.chunking);
       if (pieces.length === 0) throw new Error('No text to index');
 
-      const embeddings = await this.embedInBatches(pieces);
+      const embeddingInputs = pieces.map((piece) =>
+        buildEmbeddingText({ title, sourceType: item.type, sourceUrl: item.sourceUrl }, piece),
+      );
+      const embeddings = await this.embedInBatches(embeddingInputs);
       this.deps.chunks.saveChunksForItem(
         itemId,
         pieces.map((chunkTextValue, chunkIndex) => ({
