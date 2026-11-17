@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractArticle, isPrivateAddress, parsePublicHttpUrl } from './urlFetcher.js';
+import { describeHttpFailure, extractArticle, isPrivateAddress, parsePublicHttpUrl } from './urlFetcher.js';
 
 describe('parsePublicHttpUrl', () => {
   it('accepts http and https URLs', () => {
@@ -62,5 +62,19 @@ describe('extractArticle', () => {
     expect(() => extractArticle('<html><body></body></html>', 'https://example.com')).toThrow(
       /No readable text/,
     );
+  });
+});
+
+describe('describeHttpFailure', () => {
+  it('explains statuses that sites use to block automated access', () => {
+    for (const status of [401, 403, 429, 999]) {
+      expect(describeHttpFailure(status)).toBe(
+        `This site blocks automated access (HTTP ${status}). Save the link as a note instead.`,
+      );
+    }
+  });
+
+  it('reports other statuses as-is', () => {
+    expect(describeHttpFailure(404)).toBe('Page responded with HTTP 404');
   });
 });

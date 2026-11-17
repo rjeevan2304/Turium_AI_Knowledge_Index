@@ -18,8 +18,18 @@ export class FetchError extends Error {
 }
 
 const MAX_REDIRECTS = 3;
+// Statuses that sites use to turn away logged-out or automated visitors. LinkedIn uses 999.
+const BLOCKED_STATUSES = new Set([401, 403, 429, 999]);
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 10_000;
+
+/** Turns a failed HTTP status into a message the user can act on. */
+export function describeHttpFailure(status: number): string {
+  if (BLOCKED_STATUSES.has(status)) {
+    return `This site blocks automated access (HTTP ${status}). Save the link as a note instead.`;
+  }
+  return `Page responded with HTTP ${status}`;
+}
 
 /** Validates the URL shape. Throws a plain Error with a user-facing message. */
 export function parsePublicHttpUrl(raw: string): URL {
@@ -64,7 +74,7 @@ export class UrlFetcher {
         continue;
       }
       if (!response.ok) {
-        throw new FetchError(`Page responded with HTTP ${response.status}`);
+        throw new FetchError(describeHttpFailure(response.status));
       }
       const contentType = response.headers.get('content-type') ?? '';
       if (!/text\/html|application\/xhtml\+xml/i.test(contentType)) {
