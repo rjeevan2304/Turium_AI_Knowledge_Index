@@ -160,6 +160,10 @@ Every error uses one envelope. Client errors are `400` with field-level `details
 - **Evaluation:** a small labelled question set, measuring retrieval recall and whether answers are faithful to their citations, run in CI.
 - **Auth and multi-tenancy:** per-user scoping of items and queries. Deliberately out of scope here, as the brief asks.
 - **Observability:** metrics for ingest duration, failure rate, embedding and chat latency and token usage.
+- **Query caching:** keep chunk vectors in memory and update the cache when an item becomes ready, instead of reloading every embedding per question. Skipped here because it adds invalidation logic that the assignment's scope doesn't need.
+- **Top-k selection:** use a bounded heap (or the vector index's own top-k) instead of sorting every score and slicing.
+- **Item list query:** replace the per-row chunk-count subquery with a single join and aggregate.
+- **Pagination:** add `limit` and `cursor` parameters to `GET /items`, so the client's polling doesn't return every item on every request.
 
 ## Project layout
 
