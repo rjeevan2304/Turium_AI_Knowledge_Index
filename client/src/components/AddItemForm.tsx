@@ -24,7 +24,7 @@ export function AddItemForm({ onAdded }: AddItemFormProps) {
       const input = type === 'note' ? { type, text: trimmed } : { type, url: trimmed };
       await api.ingest(input);
       setValue('');
-      setMessage(type === 'note' ? 'Note saved. Processing…' : 'URL added. Fetching the page…');
+      setMessage('Saved. It will be processed in the background.');
       onAdded();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save this item');
