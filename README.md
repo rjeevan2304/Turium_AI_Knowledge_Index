@@ -28,6 +28,22 @@ To run the tests (no OpenAI key needed; they use a fake AI provider):
 npm test
 ```
 
+### Windows
+
+The same npm scripts work on Windows. Use a Node.js LTS release (22 is recommended), because `better-sqlite3` ships prebuilt Windows binaries for LTS versions. On other versions, npm tries to compile it, which needs Visual Studio Build Tools.
+
+In PowerShell or Command Prompt:
+
+```bash
+npm run install:all
+copy server\.env.example server\.env
+notepad server\.env
+npm run dev
+```
+
+- An `OPENAI_API_KEY` set in the Windows environment variables takes precedence over `server\.env`. If requests fail with `401` even though the key in the file is correct, remove it under System Properties > Environment Variables (or, for the current PowerShell window only, run `Remove-Item Env:OPENAI_API_KEY`) and restart the app.
+- If Windows Firewall prompts for Node.js, allowing it on private networks is enough, since everything runs on localhost.
+
 ## Configuration
 
 All settings live in `server/.env`. See `server/.env.example` for the full list.
