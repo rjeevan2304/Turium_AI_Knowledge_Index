@@ -2,6 +2,7 @@
 export interface AnswerSource {
   index: number;
   title: string;
+  sourceUrl: string | null;
   text: string;
 }
 

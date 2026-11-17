@@ -39,6 +39,20 @@ describe('chunkText', () => {
     expect(chunks[1]).toContain(lastWordsOfFirst);
   });
 
+  it('adds the overlap only once when a long paragraph is split', () => {
+    const words = Array.from({ length: 200 }, (_, i) => `w${i}`);
+    const chunks = chunkText(words.join(' '), options);
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      const chunkWords = chunk.split(' ');
+      expect(new Set(chunkWords).size).toBe(chunkWords.length);
+      expect(chunk.length).toBeLessThanOrEqual(options.maxChars);
+    }
+    // Overlap is still carried into the next chunk.
+    const lastWordOfFirst = chunks[0].split(' ').at(-1);
+    expect(chunks[1].split(' ')).toContain(lastWordOfFirst);
+  });
+
   it('normalises Windows line endings', () => {
     expect(chunkText('one\r\n\r\ntwo', options)).toEqual(['one\n\ntwo']);
   });

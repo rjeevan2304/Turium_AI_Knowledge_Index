@@ -45,6 +45,7 @@ export class AnswerService {
     const answerSources: AnswerSource[] = retrieved.map((hit, position) => ({
       index: position + 1,
       title: hit.chunk.itemTitle,
+      sourceUrl: hit.chunk.sourceUrl,
       text: hit.chunk.text,
     }));
     const answer = await this.options.ai.answer(question, answerSources);

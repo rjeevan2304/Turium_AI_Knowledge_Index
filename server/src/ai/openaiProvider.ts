@@ -40,7 +40,10 @@ export class OpenAIProvider implements AiProvider {
 
   async answer(question: string, sources: AnswerSource[]): Promise<string> {
     const context = sources
-      .map((source) => `[${source.index}] ${source.title}\n${source.text}`)
+      .map((source) => {
+        const url = source.sourceUrl ? `\nURL: ${source.sourceUrl}` : '';
+        return `[${source.index}] ${source.title}${url}\n${source.text}`;
+      })
       .join('\n\n');
     try {
       const response = await this.client.chat.completions.create({
