@@ -16,7 +16,11 @@ export interface ItemRecord {
 
 export interface ItemSummary extends Omit<ItemRecord, 'rawContent'> {
   chunkCount: number;
+  /** First part of the content, whitespace collapsed, for display in lists. */
+  preview: string;
 }
+
+const PREVIEW_LENGTH = 200;
 
 export interface NewItem {
   id: string;
@@ -41,6 +45,7 @@ interface ItemRow {
 
 interface SummaryRow extends Omit<ItemRow, 'raw_content'> {
   chunk_count: number;
+  preview: string | null;
 }
 
 const toRecord = (row: ItemRow): ItemRecord => ({
@@ -82,7 +87,8 @@ export class ItemRepository {
     const rows = this.db
       .prepare(
         `SELECT i.id, i.type, i.title, i.source_url, i.status, i.error, i.created_at,
-                (SELECT COUNT(*) FROM chunks c WHERE c.item_id = i.id) AS chunk_count
+                (SELECT COUNT(*) FROM chunks c WHERE c.item_id = i.id) AS chunk_count,
+                substr(COALESCE(i.raw_content, ''), 1, ${PREVIEW_LENGTH}) AS preview
          FROM items i
          ORDER BY i.created_at DESC`,
       )
@@ -96,6 +102,7 @@ export class ItemRepository {
       error: row.error,
       createdAt: row.created_at,
       chunkCount: row.chunk_count,
+      preview: (row.preview ?? '').replace(/\s+/g, ' ').trim(),
     }));
   }
 

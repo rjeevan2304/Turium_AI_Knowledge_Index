@@ -123,6 +123,7 @@ describe('Knowledge Inbox API', () => {
       expect(res.status).toBe(200);
       expect(res.body.items).toHaveLength(2);
       expect(res.body.items[0].title).toBe('Second note.');
+      expect(res.body.items[0].preview).toBe('Second note.');
       expect(res.body.items[0]).not.toHaveProperty('rawContent');
     });
   });

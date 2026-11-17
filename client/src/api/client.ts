@@ -11,6 +11,7 @@ export interface Item {
   error: string | null;
   createdAt: string;
   chunkCount: number;
+  preview: string;
 }
 
 export interface QuerySource {
