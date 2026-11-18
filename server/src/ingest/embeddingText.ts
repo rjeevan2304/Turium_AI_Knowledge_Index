@@ -5,6 +5,8 @@ export interface EmbeddingSource {
 }
 
 const URL_PATTERN = /https?:\/\/[^\s<>"']+/g;
+// Sentence punctuation that often follows a link in prose, e.g. "(see https://x.com)."
+const TRAILING_PUNCTUATION = /[.,;:!?)\]}]+$/;
 
 /**
  * Builds the text that is embedded for one chunk. The stored chunk text is unchanged; this
@@ -12,7 +14,9 @@ const URL_PATTERN = /https?:\/\/[^\s<>"']+/g;
  * Links and their site names come from the item's source URL, or from links in the chunk.
  */
 export function buildEmbeddingText(source: EmbeddingSource, chunkText: string): string {
-  const links = source.sourceUrl ? [source.sourceUrl] : chunkText.match(URL_PATTERN) ?? [];
+  const links = source.sourceUrl
+    ? [source.sourceUrl]
+    : (chunkText.match(URL_PATTERN) ?? []).map((link) => link.replace(TRAILING_PUNCTUATION, ''));
   const sites = [...new Set(links.map(siteOf).filter((site): site is string => site !== null))];
 
   const header = [`Saved ${source.sourceType}: ${source.title}`];

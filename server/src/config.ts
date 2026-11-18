@@ -5,6 +5,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
   OPENAI_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
   OPENAI_CHAT_MODEL: z.string().default('gpt-4o-mini'),
+  HOST: z.string().default('127.0.0.1'),
   PORT: z.coerce.number().int().positive().default(3001),
   DB_PATH: z.string().default('./data/inbox.db'),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),

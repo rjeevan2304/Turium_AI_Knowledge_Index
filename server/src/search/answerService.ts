@@ -1,4 +1,5 @@
 import type { AiProvider, AnswerSource } from '../ai/aiProvider.js';
+import type { Logger } from '../logger.js';
 import type { ChunkRepository, StoredChunk } from '../store/chunkRepository.js';
 import { cosineSimilarity } from './vectorMath.js';
 
@@ -23,6 +24,7 @@ export interface AnswerServiceOptions {
   chunks: ChunkRepository;
   topK: number;
   minSimilarity: number;
+  logger?: Logger;
 }
 
 export const NO_RELEVANT_CONTENT_ANSWER =
@@ -69,9 +71,17 @@ export class AnswerService {
    * exhaustive scan; see the README for when an index becomes necessary.
    */
   private retrieve(questionVector: number[]): Array<{ chunk: StoredChunk; score: number }> {
-    const { chunks, topK, minSimilarity } = this.options;
-    return chunks
-      .findAllReadyChunks()
+    const { chunks, topK, minSimilarity, logger } = this.options;
+    const all = chunks.findAllReadyChunks();
+    // Chunks embedded with a different model have a different vector size and can't be compared.
+    const comparable = all.filter((chunk) => chunk.embedding.length === questionVector.length);
+    if (comparable.length < all.length) {
+      logger?.warn(
+        { skipped: all.length - comparable.length },
+        'Skipped chunks embedded with a different model; re-add those items to search them',
+      );
+    }
+    return comparable
       .map((chunk) => ({ chunk, score: cosineSimilarity(questionVector, chunk.embedding) }))
       .filter((hit) => hit.score >= minSimilarity)
       .sort((a, b) => b.score - a.score)
@@ -79,10 +89,11 @@ export class AnswerService {
   }
 }
 
-function parseCitedIndices(answer: string): Set<number> {
+/** Finds cited source numbers, written as [1], [1][2] or [1, 2]. */
+export function parseCitedIndices(answer: string): Set<number> {
   const indices = new Set<number>();
-  for (const match of answer.matchAll(/\[(\d+)\]/g)) {
-    indices.add(Number(match[1]));
+  for (const match of answer.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]/g)) {
+    for (const part of match[1].split(',')) indices.add(Number(part.trim()));
   }
   return indices;
 }

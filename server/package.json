@@ -32,5 +32,8 @@
     "typescript": "^7.0.2",
     "vitest": "^4.1.12"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": ">=20.17"
+  }
 }

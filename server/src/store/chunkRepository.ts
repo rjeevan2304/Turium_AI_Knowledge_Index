@@ -27,7 +27,7 @@ interface StoredChunkRow {
 export class ChunkRepository {
   constructor(private readonly db: AppDatabase) {}
 
-  /** Replaces all chunks for an item and marks it ready in one transaction. */
+  /** Replaces all chunks for an item in one transaction. The caller marks the item ready. */
   saveChunksForItem(itemId: string, chunks: ChunkToStore[]): void {
     const insert = this.db.prepare(
       'INSERT INTO chunks (item_id, chunk_index, text, embedding) VALUES (?, ?, ?, ?)',

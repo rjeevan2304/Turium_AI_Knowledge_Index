@@ -78,7 +78,12 @@ export class IngestService {
     try {
       while (this.queue.length > 0) {
         const itemId = this.queue.shift() as string;
-        await this.processItem(itemId);
+        try {
+          await this.processItem(itemId);
+        } catch (error) {
+          // processItem records failures itself; this only catches a failure to record one.
+          this.deps.logger.error({ err: error, itemId }, 'Could not update item after processing');
+        }
       }
     } finally {
       this.draining = false;

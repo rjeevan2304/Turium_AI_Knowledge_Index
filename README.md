@@ -1,6 +1,6 @@
 # AI Knowledge Inbox
 
-A small app where you save notes and web links, then ask questions about them in plain English. It answers using only what you saved, and shows which notes or pages each answer came from.
+A small app where you save notes and web links, then ask questions about them in plain English. The AI is told to answer only from what you saved, and the app shows which notes or pages each answer came from.
 
 **Example:** you save a note saying "The beta launches on 3 December", then ask "When is the beta launching?". The app replies "3 December [1]", and source [1] is your note.
 
@@ -23,7 +23,7 @@ This approach is called *retrieval-augmented generation* (RAG): first find the r
 ### What you need
 
 - **A computer** running macOS, Windows or Linux.
-- **Node.js** (version 20 or newer), the free program that runs this app. Download the "LTS" version from https://nodejs.org and install it like any other program.
+- **Node.js** version 20.17 or newer, the free program that runs this app. Version 22 is recommended. Download it from https://nodejs.org and install it like any other program.
 - **An OpenAI API key**, which lets the app use OpenAI. Create one at https://platform.openai.com/api-keys. The account needs a small amount of credit. Normal testing costs a few cents.
 
 ### Step by step
@@ -32,6 +32,7 @@ This approach is called *retrieval-augmented generation* (RAG): first find the r
 2. **Open a terminal in the project folder.** A terminal is a window where you type commands.
    - macOS: open **Terminal** and navigate to the project folder.
    - Windows: open **Powershell** and navigate to the project folder.
+   - To navigate, type `cd` followed by the folder's location, for example `cd Downloads/Turium_AI_Knowledge_Index`, and press Enter.
 3. **Install the app's building blocks.** Type this and press Enter. It takes a minute or two:
    ```bash
    npm run install:all
@@ -42,7 +43,7 @@ This approach is called *retrieval-augmented generation* (RAG): first find the r
      cp server/.env.example server/.env
      ```
    - Windows:
-     ```bash
+     ```powershell
      copy server\.env.example server\.env
      ```
    Open the new `server/.env` file in any text editor (on Windows: `notepad server\.env`). Replace `sk-your-key-here` with your key and save. This file stays on your computer and is never uploaded to GitHub.
@@ -72,10 +73,10 @@ This approach is called *retrieval-augmented generation* (RAG): first find the r
 | `npm` is not recognised | Node.js isn't installed, or the terminal was open before you installed it. Install Node.js, then open a new terminal. |
 | The app stops with "Invalid configuration" mentioning `OPENAI_API_KEY` | The `server/.env` file or the key in it is missing. Check step 4. |
 | Items fail with a 401 error | OpenAI rejected the key. Check it was copied fully. If a key is also set on your computer's system settings, that one is used instead of the file: remove it, then restart the app. |
-| Items fail with a 429 error | The OpenAI account has no credit left. Add credit on the OpenAI website. |
+| Items fail with a 429 error | The OpenAI account has run out of credit, or is sending too many requests. Check your credit on the OpenAI website, or wait a minute and try again. |
 | A link fails with "This site blocks automated access" | Some sites, such as LinkedIn, refuse requests from apps. Save the link as a note instead. |
-| Install errors mentioning `better-sqlite3` or `node-gyp` | Install the LTS version of Node.js (22 is recommended), then run step 3 again. |
-| Windows Firewall asks about Node.js | Allow it on private networks. The app only runs on your own computer. |
+| Install errors mentioning `better-sqlite3` or `node-gyp` | Install Node.js 22, then run step 3 again. |
+| Windows Firewall asks about Node.js | You can click Cancel. The app only accepts connections from your own computer, so it doesn't need network access. |
 
 ### Running the tests
 
@@ -94,7 +95,7 @@ The rest of this file is for developers and reviewers.
 - **Backend:** Node.js 20+, Express 5, TypeScript, SQLite (`better-sqlite3`), OpenAI API
 - **Frontend:** React 19, Vite, TypeScript (plain CSS, no UI library)
 
-The API runs on port 3001. In development, Vite serves the frontend on port 5173 and forwards `/ingest`, `/items` and `/query` to the API.
+The API listens on `127.0.0.1:3001`, so only this computer can reach it (there is no login). In development, Vite serves the frontend on port 5173 and forwards `/ingest`, `/items` and `/query` to the API.
 
 ### Configuration
 
@@ -105,6 +106,7 @@ All settings live in `server/.env`. See `server/.env.example` for the full list.
 | `OPENAI_API_KEY` | (required) | Used for embeddings and answers |
 | `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model |
 | `OPENAI_CHAT_MODEL` | `gpt-4o-mini` | Model that writes the answer |
+| `HOST` | `127.0.0.1` | Address the API listens on. Use `0.0.0.0` only on a network you trust, since there is no login |
 | `PORT` | `3001` | API port |
 | `DB_PATH` | `./data/inbox.db` | SQLite file (created on first run) |
 | `RETRIEVAL_TOP_K` | `5` | Chunks passed to the model per question |
@@ -175,7 +177,7 @@ curl -X POST localhost:3001/query -H 'content-type: application/json' \
 
 **Chunking.** Text is split on paragraphs and packed into chunks of up to 1,500 characters (about 350 tokens). Very long paragraphs are cut at word boundaries. Each chunk starts with the last 200 characters of the previous one, so a sentence that crosses a boundary can still be found. Smaller chunks match more precisely but lose context, and larger ones blur the embedding. The overlap costs a little duplicated storage.
 
-**Finding bare links.** A question like "my GitHub link" shares almost no words with `https://github.com/...`, so each chunk is embedded with a short header: the item title, any links, and their site names (for example `Sites: github.com`). Only the embedding input changes, not the stored text. The answer model also sees each source's URL, so it can return the link itself. This is a small heuristic. Keyword or hybrid search would handle more phrasings but goes beyond the brief.
+**Finding bare links.** A question like "my GitHub link" shares almost no words with `https://github.com/...`, so each chunk is embedded with a short header: the item title, any links, and their site names (for example `Sites: github.com`). Only the embedding input changes, not the stored text. The answer model also sees each source's URL, so it can return the link itself. This is a small heuristic. Keyword or hybrid search would handle more phrasings but goes beyond this project's scope.
 
 **Similarity cutoff.** `MIN_SIMILARITY` is 0.15. With `text-embedding-3-small`, relevant matches in this app scored about 0.19 to 0.46, and unrelated text about 0.09, so a higher cutoff hid real matches. The model still decides whether a weak match answers the question.
 
@@ -183,9 +185,9 @@ curl -X POST localhost:3001/query -H 'content-type: application/json' \
 
 **Background processing.** Fetching and embedding can take seconds, so `POST /ingest` returns `202` and an in-process queue handles one item at a time. Failures are saved on the item so the frontend can show them. Pending items are re-queued on startup. A crash mid-item can lose that item's work, and the queue doesn't work across multiple servers.
 
-**Fetching URLs safely.** Fetching user-supplied URLs on the server is a known risk (SSRF), so the fetcher:
+**Fetching URLs.** Fetching user-supplied URLs on the server is a known risk (SSRF), so the fetcher:
 - accepts only `http` and `https`, and rejects URLs with embedded credentials;
-- refuses private, loopback and link-local addresses, checked after DNS lookup;
+- refuses private, loopback, link-local, reserved and multicast addresses (including IPv4 addresses wrapped in IPv6, NAT64 and 6to4), checked after DNS lookup;
 - follows at most 3 redirects, re-checking each one;
 - stops after 10 seconds or 2 MB;
 - never runs page scripts.
@@ -203,7 +205,7 @@ A DNS-rebinding attack could still change the address between the check and the 
 - **Query speed:** each question scores every chunk. Around 100,000 chunks it gets noticeably slow.
 - **Memory:** all embeddings are loaded for each question.
 - **Single process:** the queue, database and server share one process, so it can't run on several servers.
-- **Changing the embedding model** makes stored vectors incompatible, and nothing detects it.
+- **Changing the embedding model** makes stored vectors incompatible. Chunks with a different vector size are skipped with a warning in the logs, but a new model with the same size isn't detected. Either way, items need to be re-added.
 - **Cost:** every question costs one embedding call and one chat call, with no caching.
 - **Writes:** SQLite allows one writer at a time.
 
@@ -215,7 +217,7 @@ A DNS-rebinding attack could still change the address between the check and the 
 - **Search quality:** hybrid keyword and vector search, a reranker, and the embedding model version stored per chunk.
 - **Answers:** streaming, and caching repeated questions.
 - **Evaluation:** a labelled question set run in CI, checking retrieval and whether answers match their citations.
-- **Auth and multiple users:** per-user data. Left out on purpose, as the brief asks.
+- **Auth and multiple users:** logins and per-user data. Left out on purpose to keep this project small.
 - **Monitoring:** metrics for ingest time, failure rate, OpenAI latency and token use.
 - **Performance:** keep embeddings in memory between questions, use a heap for top-k, replace the per-row chunk count with a join, and paginate `GET /items`.
 

@@ -35,4 +35,12 @@ describe('buildEmbeddingText', () => {
     );
     expect(text).toContain('Sites: news.site.org');
   });
+
+  it('drops sentence punctuation after a link', () => {
+    const text = buildEmbeddingText(
+      { title: 'Profile', sourceType: 'note', sourceUrl: null },
+      'My profile (https://example.com/me).',
+    );
+    expect(text).toContain('Links: https://example.com/me\n');
+  });
 });

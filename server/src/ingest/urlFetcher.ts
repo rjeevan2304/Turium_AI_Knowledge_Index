@@ -58,7 +58,7 @@ export class UrlFetcher {
     let html: string | null = null;
 
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-      await assertPublicHost(url.hostname);
+      await assertPublicHost(url.hostname.replace(/^\[|\]$/g, ''));
       const response = await fetch(url, {
         redirect: 'manual',
         signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -130,36 +130,42 @@ async function assertPublicHost(hostname: string): Promise<void> {
   }
 }
 
+// Ranges that are not on the public internet: private, loopback, link-local, shared (CGNAT),
+// documentation, benchmarking, multicast and reserved. NAT64 and 6to4 are blocked as well
+// because they can embed a private IPv4 address.
+const BLOCKED = new net.BlockList();
+for (const [network, prefix] of [
+  ['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16],
+  ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.0.2.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15],
+  ['198.51.100.0', 24], ['203.0.113.0', 24], ['224.0.0.0', 4], ['240.0.0.0', 4],
+] as const) {
+  BLOCKED.addSubnet(network, prefix, 'ipv4');
+}
+for (const [network, prefix] of [
+  ['::', 96], ['::1', 128], ['64:ff9b::', 96], ['64:ff9b:1::', 48], ['100::', 64], ['2001:db8::', 32],
+  ['2002::', 16], ['fc00::', 7], ['fe80::', 10], ['fec0::', 10], ['ff00::', 8],
+] as const) {
+  BLOCKED.addSubnet(network, prefix, 'ipv6');
+}
+
 export function isPrivateAddress(address: string): boolean {
   const version = net.isIP(address);
-  if (version === 4) return isPrivateIPv4(address);
+  if (version === 4) return BLOCKED.check(address, 'ipv4');
   if (version === 6) {
-    const lower = address.toLowerCase();
-    if (lower.startsWith('::ffff:')) return isPrivateIPv4(lower.slice(7));
-    return (
-      lower === '::' ||
-      lower === '::1' ||
-      lower.startsWith('fc') ||
-      lower.startsWith('fd') ||
-      lower.startsWith('fe8') ||
-      lower.startsWith('fe9') ||
-      lower.startsWith('fea') ||
-      lower.startsWith('feb')
-    );
+    const mapped = ipv4FromMapped(address);
+    if (mapped) return BLOCKED.check(mapped, 'ipv4');
+    return BLOCKED.check(address, 'ipv6');
   }
   return true; // Not an IP address at all: refuse.
 }
 
-function isPrivateIPv4(address: string): boolean {
-  const [a, b] = address.split('.').map(Number);
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    a >= 224
-  );
+/** Returns the IPv4 address inside an IPv4-mapped IPv6 address (::ffff:a.b.c.d or ::ffff:7f00:1). */
+function ipv4FromMapped(address: string): string | null {
+  // The URL parser normalises any IPv6 spelling, e.g. 0:0:0:0:0:ffff:7f00:1 -> ::ffff:7f00:1.
+  const normalised = new URL(`http://[${address}]`).hostname.slice(1, -1);
+  const match = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(normalised);
+  if (!match) return null;
+  const high = parseInt(match[1], 16);
+  const low = parseInt(match[2], 16);
+  return [high >> 8, high & 255, low >> 8, low & 255].join('.');
 }

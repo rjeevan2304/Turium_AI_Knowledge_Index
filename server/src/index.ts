@@ -42,11 +42,13 @@ function main(): void {
     chunks,
     topK: config.RETRIEVAL_TOP_K,
     minSimilarity: config.MIN_SIMILARITY,
+    logger,
   });
 
   const app = createApp({ logger, ingest, answers, items });
-  const server = app.listen(config.PORT, () => {
-    logger.info({ port: config.PORT, db: config.DB_PATH }, 'Knowledge Inbox API listening');
+  // Listens on this computer only by default. There is no login, so don't expose it widely.
+  const server = app.listen(config.PORT, config.HOST, () => {
+    logger.info({ host: config.HOST, port: config.PORT, db: config.DB_PATH }, 'Knowledge Inbox API listening');
   });
 
   const shutdown = (signal: string) => {
