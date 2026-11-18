@@ -30,8 +30,8 @@ This approach is called *retrieval-augmented generation* (RAG): first find the r
 
 1. **Download the project.** On the GitHub page, click **Code**, then **Download ZIP**, and unzip it. (If you use Git: `git clone https://github.com/rjeevan2304/Turium_AI_Knowledge_Index.git`.)
 2. **Open a terminal in the project folder.** A terminal is a window where you type commands.
-   - macOS: open the **Terminal** app, type `cd ` (with a space), drag the project folder into the window, and press Enter.
-   - Windows: open the project folder, click the address bar, type `powershell`, and press Enter.
+   - macOS: open **Terminal** and navigate to the project folder.
+   - Windows: open **Powershell** and navigate to the project folder.
 3. **Install the app's building blocks.** Type this and press Enter. It takes a minute or two:
    ```bash
    npm run install:all
